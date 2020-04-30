@@ -3,12 +3,18 @@ kind: Ingress
 metadata:
   name: spin-ingress
   namespace: spinnaker
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
   labels:
     app: spin
     cluster: spin-ingress
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  tls:
+  - hosts:
+    - spinnaker.stackarea.com
+    - spinnaker-api.stackarea.com
+    secretName: spin-tls-secret
   rules:
   - host: spinnaker.stackarea.com 
     http:
@@ -17,10 +23,10 @@ spec:
           serviceName: spin-deck
           servicePort: 9000
         path: /
-  - host: spin-api.stackarea.com 
+  - host: spinnaker-api.stackarea.com 
     http:
       paths:
       - backend:
           serviceName: spin-gate
           servicePort: 8084
-        path: / 
+        path: /
