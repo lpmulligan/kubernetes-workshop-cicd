@@ -15,4 +15,4 @@ node {
                   resourceGroupName: 'lpm10m-eus2-shared-services-rg',
                   sourceType: 'git'
   }
-}   
+}  
