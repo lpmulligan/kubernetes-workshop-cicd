@@ -13,6 +13,6 @@ node {
                   dockerfile: 'Dockerfile',
                   registryName: 'lpm10meus2acr', 
                   resourceGroupName: 'lpm10m-eus2-shared-services-rg',
-                  imageNames: [[image: "sample-go-demo:$gitBranch-$gitShortCommit"]]
+                  imageNames: [[image: "sample-go-demo/sample-go-demo:$gitBranch-$gitShortCommit"]]
   }
 }  
