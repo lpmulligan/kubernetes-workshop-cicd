@@ -11,10 +11,9 @@ node {
                   sourceType: 'git',
                   gitRepo: 'https://github.com/lpmulligan/kubernetes-workshop-cicd',
                   gitPath: 'app/sample-go/',
-                  dockerfile: 'app/sample-go/Dockerfile',
+                  dockerfile: 'Dockerfile',
                   registryName: 'lpm10meus2acr', 
                   resourceGroupName: 'lpm10m-eus2-shared-services-rg',
                   imageNames: [[image: "sample-go-demo:$gitBranch-$gitShortCommit"]]
-
   }
 }  
