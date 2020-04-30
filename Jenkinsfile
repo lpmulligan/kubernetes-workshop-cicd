@@ -8,11 +8,13 @@ node {
   }
    stage('build') {
     acrQuickTask azureCredentialsId: 'lpm10m-jenkins-sp',
+                  sourceType: 'git',
                   gitRepo: 'https://github.com/lpmulligan/kubernetes-workshop-cicd',
+                  gitPath: 'app/sample-go/',
                   dockerfile: 'app/sample-go/Dockerfile',
-                  imageNames: [[image: "sample-go-demo:$gitBranch-$gitShortCommit"]], 
                   registryName: 'lpm10meus2acr', 
                   resourceGroupName: 'lpm10m-eus2-shared-services-rg',
-                  sourceType: 'git'
+                  imageNames: [[image: "sample-go-demo:$gitBranch-$gitShortCommit"]]
+
   }
 }  
