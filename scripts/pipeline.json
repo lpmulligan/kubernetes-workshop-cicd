@@ -1,0 +1,278 @@
+{
+    "name": "sample-app Source to Prod",
+    "application": "sample-app-demo",
+    "limitConcurrent": true,
+    "keepWaitingPipelines": false,
+    "parallel": true,
+    "executionEngine": "v2",
+    "index": 0,
+    "stages": [
+        {
+            "type": "deploy",
+            "clusters": [
+                {
+                    "deployment": null,
+                    "stack": "dev",
+                    "region": "default",
+                    "cloudProvider": "kubernetes",
+                    "namespace": "default",
+                    "securityContext": null,
+                    "provider": "kubernetes",
+                    "restartPolicy": null,
+                    "targetSize": 1,
+                    "application": "sample-app",
+                    "loadBalancers": [
+                        "sample-app-dev"
+                    ],
+                    "podAnnotations": {},
+                    "securityGroups": [],
+                    "volumeSources": [],
+                    "strategy": "",
+                    "freeFormDetails": null,
+                    "account": "my-kubernetes-account",
+                    "interestingHealthProviderNames": [
+                        "KubernetesContainer",
+                        "KubernetesPod"
+                    ],
+                    "replicaSetAnnotations": {},
+                    "containers": [
+                        {
+                            "limits": {
+                                "memory": null,
+                                "cpu": null
+                            },
+                            "volumeMounts": [],
+                            "livenessProbe": null,
+                            "command": [],
+                            "args": [],
+                            "envVars": [],
+                            "ports": [
+                                {
+                                    "hostIp": null,
+                                    "protocol": "TCP",
+                                    "name": "http",
+                                    "hostPort": null,
+                                    "containerPort": 8080
+                                }
+                            ],
+                            "imagePullPolicy": "IFNOTPRESENT",
+                            "name": "sample-app",
+                            "imageDescription": {
+                                "imageId": "lpm10meus2acr.azurecr.io/sample-go-demo/sample-go-demo (Tag resolved at runtime)",
+                                "fromTrigger": true,
+                                "registry": "lpm10meus2acr.azurecr.io",
+                                "repository": "sample-go-demo/sample-go-demo",
+                                "tag": null,
+                                "account": "lpm10meus2acr"
+                            },
+                            "requests": {
+                                "cpu": null,
+                                "memory": null
+                            },
+                            "readinessProbe": {
+                                "handler": {
+                                    "httpGetAction": {
+                                        "uriScheme": "HTTP",
+                                        "port": 8080,
+                                        "path": "/"
+                                    },
+                                    "type": "HTTP",
+                                    "tcpSocketAction": {
+                                        "port": 80
+                                    },
+                                    "execAction": {
+                                        "commands": []
+                                    }
+                                },
+                                "successThreshold": 1,
+                                "failureThreshold": 3,
+                                "timeoutSeconds": 1,
+                                "periodSeconds": 10,
+                                "initialDelaySeconds": 0
+                            }
+                        }
+                    ]
+                }
+            ],
+            "refId": "1",
+            "name": "Deploy to Dev",
+            "requisiteStageRefIds": []
+        },
+        {
+            "type": "destroyServerGroup",
+            "credentials": "my-kubernetes-account",
+            "refId": "2",
+            "requisiteStageRefIds": [
+                "1"
+            ],
+            "cloudProviderType": "kubernetes",
+            "cloudProvider": "kubernetes",
+            "cluster": "sample-app-dev",
+            "continuePipeline": true,
+            "failPipeline": false,
+            "namespaces": [
+                "default"
+            ],
+            "name": "Destroy Previous Dev Cluster",
+            "interestingHealthProviderNames": [
+                "KubernetesService"
+            ],
+            "target": "ancestor_asg_dynamic"
+        },
+        {
+            "continuePipeline": false,
+            "failPipeline": false,
+            "judgmentInputs": [],
+            "name": "Manual Judgment",
+            "notifications": [],
+            "refId": "3",
+            "type": "manualJudgment",
+            "requisiteStageRefIds": [
+                "1"
+            ],
+            "instructions": "Verify the dev server group looks good. Run `kubectl proxy` and navigate to this url to test: http://localhost:8001/api/v1/proxy/namespaces/default/services/sample-app-dev:80/"
+        },
+        {
+            "cloudProvider": "kubernetes",
+            "cloudProviderType": "kubernetes",
+            "selectionStrategy": "NEWEST",
+            "name": "Find Image from Dev Cluster",
+            "onlyEnabled": true,
+            "namespaces": [
+                "default"
+            ],
+            "cluster": "sample-app-dev",
+            "refId": "4",
+            "credentials": "my-kubernetes-account",
+            "type": "findImage",
+            "requisiteStageRefIds": [
+                "3"
+            ],
+            "imageNamePattern": ".*"
+        },
+        {
+            "requisiteStageRefIds": [
+                "4"
+            ],
+            "name": "Deploy to Prod",
+            "refId": "5",
+            "type": "deploy",
+            "clusters": [
+                {
+                    "replicaSetAnnotations": {},
+                    "interestingHealthProviderNames": [
+                        "KubernetesContainer",
+                        "KubernetesPod"
+                    ],
+                    "containers": [
+                        {
+                            "command": [],
+                            "livenessProbe": null,
+                            "volumeMounts": [],
+                            "limits": {
+                                "cpu": null,
+                                "memory": null
+                            },
+                            "readinessProbe": {
+                                "handler": {
+                                    "httpGetAction": {
+                                        "path": "/",
+                                        "port": 8080,
+                                        "uriScheme": "HTTP"
+                                    },
+                                    "type": "HTTP",
+                                    "tcpSocketAction": {
+                                        "port": 80
+                                    },
+                                    "execAction": {
+                                        "commands": []
+                                    }
+                                },
+                                "failureThreshold": 3,
+                                "successThreshold": 1,
+                                "initialDelaySeconds": 0,
+                                "periodSeconds": 10,
+                                "timeoutSeconds": 1
+                            },
+                            "requests": {
+                                "memory": null,
+                                "cpu": null
+                            },
+                            "imageDescription": {
+                                "repository": "Find Image from Dev Cluster",
+                                "cluster": "sample-app-dev",
+                                "stageId": "4",
+                                "imageId": "sample-app-dev .*",
+                                "fromContext": true,
+                                "pattern": ".*"
+                            },
+                            "name": "sample-app",
+                            "ports": [
+                                {
+                                    "hostPort": null,
+                                    "containerPort": 8080,
+                                    "hostIp": null,
+                                    "protocol": "TCP",
+                                    "name": "http"
+                                }
+                            ],
+                            "imagePullPolicy": "IFNOTPRESENT",
+                            "envVars": [],
+                            "args": []
+                        }
+                    ],
+                    "freeFormDetails": null,
+                    "account": "my-kubernetes-account",
+                    "strategy": "",
+                    "volumeSources": [],
+                    "podAnnotations": {},
+                    "securityGroups": [],
+                    "targetSize": 1,
+                    "loadBalancers": [
+                        "sample-app-prod"
+                    ],
+                    "application": "sample-app",
+                    "restartPolicy": null,
+                    "securityContext": null,
+                    "provider": "kubernetes",
+                    "cloudProvider": "kubernetes",
+                    "namespace": "default",
+                    "region": "default",
+                    "deployment": null,
+                    "stack": "prod"
+                }
+            ]
+        },
+        {
+            "type": "disableCluster",
+            "credentials": "my-kubernetes-account",
+            "remainingEnabledServerGroups": 1,
+            "refId": "6",
+            "preferLargerOverNewer": "false",
+            "requisiteStageRefIds": [
+                "5"
+            ],
+            "cloudProviderType": "kubernetes",
+            "cloudProvider": "kubernetes",
+            "cluster": "sample-app-prod",
+            "namespaces": [
+                "default"
+            ],
+            "name": "Disable Previous Prod Cluster",
+            "interestingHealthProviderNames": [
+                "KubernetesService"
+            ]
+        }
+    ],
+    "triggers": [
+        {
+            "type": "docker",
+            "tag": null,
+            "account": "lpm10meus2acr",
+            "repository": "sample-go-demo/sample-go-demo",
+            "registry": "lpm10meus2acr.azurecr.io",
+            "enabled": true,
+            "organization": ""
+        }
+    ]
+}
